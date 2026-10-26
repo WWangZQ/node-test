@@ -34,8 +34,20 @@ CloseApplications=yes
 RestartApplications=no
 SetupLogging=yes
 
+[Languages]
+Name: "chinesesimplified"; MessagesFile: "compiler:Languages\ChineseSimplified.isl"
+Name: "english"; MessagesFile: "compiler:Default.isl"
+
+[CustomMessages]
+chinesesimplified.DesktopIcon=创建桌面快捷方式
+chinesesimplified.ShortcutGroup=快捷方式：
+chinesesimplified.LaunchApp=启动节点测评
+english.DesktopIcon=Create a desktop shortcut
+english.ShortcutGroup=Shortcuts:
+english.LaunchApp=Launch Node Test
+
 [Tasks]
-Name: desktopicon; Description: "Create a desktop shortcut"; GroupDescription: "Shortcuts:";
+Name: desktopicon; Description: "{cm:DesktopIcon}"; GroupDescription: "{cm:ShortcutGroup}";
 
 [Files]
 Source: "{#SourceDir}\*"; DestDir: "{app}"; Flags: ignoreversion recursesubdirs createallsubdirs
@@ -45,4 +57,4 @@ Name: "{group}\节点测评"; Filename: "{app}\NodeTest.exe"
 Name: "{autodesktop}\节点测评"; Filename: "{app}\NodeTest.exe"; Tasks: desktopicon
 
 [Run]
-Filename: "{app}\NodeTest.exe"; Description: "Launch 节点测评"; Flags: nowait postinstall skipifsilent
+Filename: "{app}\NodeTest.exe"; Description: "{cm:LaunchApp}"; Flags: nowait postinstall skipifsilent
