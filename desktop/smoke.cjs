@@ -3,6 +3,9 @@ const assert=require('node:assert/strict');
 const fs=require('node:fs/promises'),path=require('node:path');
 module.exports=async({win,controller,root,app})=>{
  const title=await win.webContents.executeJavaScript('document.querySelector("h1").textContent');assert.equal(title,'节点测评');
+ const {safeStorage}=require('electron');
+ assert.equal(await safeStorage.isAsyncEncryptionAvailable(),true);
+ const secret='fixture-key-never-saved';assert.equal((await safeStorage.decryptStringAsync(await safeStorage.encryptStringAsync(secret))).result,secret);
  const sandbox=await win.webContents.executeJavaScript('typeof require');assert.equal(sandbox,'undefined');
  const yaml='proxies:\n- {name: Dead A, type: socks5, server: 127.0.0.1, port: 9}\n- {name: Dead B, type: socks5, server: 127.0.0.1, port: 9}\n';
  await controller.parse(yaml,'Local fixture');assert.equal(controller.nodes.length,2);

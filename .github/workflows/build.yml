@@ -33,7 +33,9 @@ jobs:
         if: matrix.arch == 'arm64'
         run: |
           mkdir -p bin
-          cp dist/macos-arm64/节点测评.app/Contents/Resources/node-worker bin/node-worker
+          cd backend
+          go build -trimpath -o ../bin/node-worker ./cmd/local-worker
+          cd ..
           python3 tests/test_worker.py
       - name: Package
         run: |

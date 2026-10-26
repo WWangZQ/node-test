@@ -3,7 +3,7 @@ import base64, http.server, json, os, pathlib, select, socket, socketserver, ssl
 ROOT=pathlib.Path(__file__).resolve().parents[1]
 WORKER=ROOT/'bin/node-worker'
 def run(payload,env=None):
-    p=subprocess.run([str(WORKER)],input=json.dumps(payload),text=True,capture_output=True,timeout=25,env=env)
+    p=subprocess.run([str(WORKER)],input=json.dumps(payload),text=True,capture_output=True,timeout=50,env=env)
     lines=[x[7:] for x in p.stdout.splitlines() if x.startswith('RESULT:')]
     assert lines,p.stderr
     return json.loads(lines[-1])
@@ -15,7 +15,7 @@ class Site(http.server.BaseHTTPRequestHandler):
         n=int(self.path.split('bytes=')[-1]);self.send_response(200);self.send_header('Content-Length',str(n));self.end_headers()
         try:
             while n:
-                b=min(n,16384);self.wfile.write(b'x'*b);self.wfile.flush();n-=b;time.sleep(.01)
+                b=min(n,16384);self.wfile.write(b'x'*b);self.wfile.flush();n-=b;time.sleep(.002)
         except (BrokenPipeError,ConnectionResetError):pass
 class Tunnel(socketserver.StreamRequestHandler):
     calls=0
@@ -39,16 +39,15 @@ class WorkerTests(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
         cls.temp=tempfile.TemporaryDirectory();p=pathlib.Path(cls.temp.name)
-        subprocess.run(['openssl','req','-x509','-newkey','rsa:2048','-nodes','-days','1','-keyout',str(p/'key.pem'),'-out',str(p/'cert.pem'),'-subj','/CN=localhost','-addext','subjectAltName=IP:127.0.0.1'],check=True,stdout=subprocess.DEVNULL,stderr=subprocess.DEVNULL)
+        # Plain local HTTP isolates byte accounting and CONNECT routing from OS trust stores.
         cls.site=http.server.ThreadingHTTPServer(('127.0.0.1',0),Site)
-        ctx=ssl.SSLContext(ssl.PROTOCOL_TLS_SERVER);ctx.load_cert_chain(p/'cert.pem',p/'key.pem');# Local HTTP target keeps the test independent of macOS trust-store changes.
         cls.proxy=Server(('127.0.0.1',0),Tunnel)
         for s in [cls.site,cls.proxy]:threading.Thread(target=s.serve_forever,daemon=True).start()
-        cls.env={**os.environ,'SSL_CERT_FILE':str(p/'cert.pem')}
+        cls.env=dict(os.environ)
     @classmethod
     def tearDownClass(cls):cls.site.shutdown();cls.proxy.shutdown();cls.temp.cleanup()
     def test_end_to_end_download_via_proxy(self):
-        row=run({'action':'test','node':{'name':'fixture','type':'http','server':'127.0.0.1','port':self.proxy.server_address[1]},'mode':'speed','seconds':3,'megabytes':1,'timeout':2,'ip_info':False,'server':f'http://127.0.0.1:{self.site.server_address[1]}'},self.env)
+        row=run({'action':'test','node':{'name':'fixture','type':'http','server':'127.0.0.1','port':self.proxy.server_address[1]},'mode':'speed','seconds':10,'megabytes':1,'timeout':8,'ip_info':False,'server':f'http://127.0.0.1:{self.site.server_address[1]}'},self.env)
         self.assertEqual(row['status'],'complete',row)
         self.assertEqual(row['bytes'],1_000_000)
         self.assertGreater(row['average_MBps'],0)

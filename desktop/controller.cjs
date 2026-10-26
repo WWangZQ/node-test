@@ -83,6 +83,9 @@ class Controller {
       }
       if(this.cancelled)for(const row of r.rows)if(['pending','running'].includes(row.status))row.status='cancelled';
       r.status=this.cancelled?'cancelled':'complete';r.finished=date();await this.persist();this.emit({type:'report',report:r});this.message(this.cancelled?'已停止，已完成的结果可以导出。':'测试完成。结果已保存在本机。');
+    } catch(error) {
+      if(this.report?.status==='running'){this.report.status='interrupted';for(const row of this.report.rows)if(['running','pending'].includes(row.status))row.status='interrupted';await this.persist().catch(()=>{});this.emit({type:'report',report:this.report});}
+      throw error;
     } finally {this.busy=false;await this.history();}
   }
 }

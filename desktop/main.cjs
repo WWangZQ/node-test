@@ -12,7 +12,7 @@ const mainURL=pathToFileURL(path.join(root,'static/index.html')).href;
 const settingsURL=pathToFileURL(path.join(root,'desktop/settings.html')).href;
 const keyIDs=['ProxyCheck','ipapi.is','scam_user','Scamalytics','scam_region','AbuseIPDB','IPQS'];
 function emit(data){if(win&&!win.isDestroyed())win.webContents.send('node-test:event',data);}
-async function readKeys(){try{return JSON.parse(safeStorage.decryptString(await fs.readFile(path.join(app.getPath('userData'),'api-keys.enc'))));}catch(e){if(e.code==='ENOENT')return {};throw Error('无法解密数据源密钥，请检查系统账户权限');}}
+async function readKeys(){try{return JSON.parse((await safeStorage.decryptStringAsync(await fs.readFile(path.join(app.getPath('userData'),'api-keys.enc')))).result);}catch(e){if(e.code==='ENOENT')return {};throw Error('无法解密数据源密钥，请检查系统账户权限');}}
 function lockWindow(w){w.webContents.setWindowOpenHandler(()=>({action:'deny'}));w.webContents.on('will-navigate',e=>e.preventDefault());w.webContents.on('will-attach-webview',e=>e.preventDefault());}
 function senderOK(event,w,url){return w&&!w.isDestroyed()&&event.sender===w.webContents&&event.senderFrame===w.webContents.mainFrame&&event.senderFrame.url===url;}
 async function showSettings(){
@@ -53,10 +53,10 @@ ipcMain.on('node-test:command',async(event,b)=>{
    if(b.cmd==='closeSettings'){settingsWin.close();return;}
    if(b.cmd==='saveSettings'){
     if(controller.busy)throw Error('测试中暂时无法修改设置');
-    if(!safeStorage.isEncryptionAvailable())throw Error('系统加密存储暂不可用');
+    if(!await safeStorage.isAsyncEncryptionAvailable())throw Error('系统加密存储暂不可用');
     const keys={};for(const k of keyIDs)if(typeof b.keys?.[k]==='string'&&b.keys[k].trim())keys[k]=b.keys[k].trim().slice(0,4096);
     keys.scam_region=(keys.scam_region||'US').toUpperCase();if(!['US','EU'].includes(keys.scam_region))throw Error('Scamalytics 节点请填写 US 或 EU');
-    await controller.atomic(path.join(app.getPath('userData'),'api-keys.enc'),safeStorage.encryptString(JSON.stringify(keys)));settingsWin.close();controller.message('数据源密钥已使用系统加密存储保存。');
+    await controller.atomic(path.join(app.getPath('userData'),'api-keys.enc'),await safeStorage.encryptStringAsync(JSON.stringify(keys)));settingsWin.close();controller.message('数据源密钥已使用系统加密存储保存。');
    }return;
   }
   if(!senderOK(event,win,mainURL))return;
