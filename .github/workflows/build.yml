@@ -1,0 +1,134 @@
+name: Build and release
+on:
+  push:
+    branches: [main]
+    tags: ['v*']
+  pull_request:
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  macos:
+    runs-on: macos-15
+    strategy:
+      matrix:
+        arch: [arm64, x86_64]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-go@v5
+        with:
+          go-version-file: backend/go.mod
+          cache-dependency-path: backend/go.sum
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+      - run: go test ./cmd/local-worker
+        working-directory: backend
+      - run: npm test
+      - run: go mod vendor
+        working-directory: backend
+      - run: python3 scripts/collect-licenses.py
+      - run: python3 scripts/build-macos.py --arch ${{ matrix.arch }}
+      - name: Local proxy integration
+        if: matrix.arch == 'arm64'
+        run: |
+          mkdir -p bin
+          cp dist/macos-arm64/节点测评.app/Contents/Resources/node-worker bin/node-worker
+          python3 tests/test_worker.py
+      - name: Package
+        run: |
+          VERSION=$(cat VERSION)
+          ditto -c -k --keepParent "dist/macos-${{ matrix.arch }}/节点测评.app" "dist/NodeTest-${VERSION}-macos-${{ matrix.arch }}.zip"
+      - uses: actions/upload-artifact@v4
+        with:
+          name: macos-${{ matrix.arch }}
+          path: dist/NodeTest-*.zip
+  windows:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-go@v5
+        with:
+          go-version-file: backend/go.mod
+          cache-dependency-path: backend/go.sum
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+          cache: npm
+      - run: npm ci
+      - run: npm test
+      - run: go test ./cmd/local-worker
+        working-directory: backend
+      - run: go mod vendor
+        working-directory: backend
+      - run: python scripts/collect-licenses.py
+      - name: Build worker
+        shell: pwsh
+        run: |
+          New-Item -ItemType Directory -Force bin
+          Push-Location backend
+          go build -trimpath -ldflags="-s -w" -o ../bin/node-worker.exe ./cmd/local-worker
+          Pop-Location
+      - run: npm run package:windows
+      - name: Packaged desktop smoke test
+        shell: pwsh
+        run: |
+          $env:NODE_TEST_SMOKE_OUTPUT = "$PWD/dist/smoke"
+          $p = Start-Process -FilePath "$PWD/dist/NodeTest-win32-x64/NodeTest.exe" -ArgumentList '--smoke-test' -Wait -PassThru
+          if ($p.ExitCode -ne 0) { throw "Desktop smoke test failed: $($p.ExitCode)" }
+          if (!(Test-Path dist/smoke/smoke-result.json)) { throw 'Missing smoke test evidence' }
+      - name: Package
+        shell: pwsh
+        run: |
+          $version = (Get-Content VERSION).Trim()
+          Compress-Archive -Path dist/NodeTest-win32-x64 -DestinationPath "dist/NodeTest-$version-windows-x64.zip"
+      - uses: actions/upload-artifact@v4
+        with:
+          name: windows-x64
+          path: dist/NodeTest-*.zip
+      - uses: actions/upload-artifact@v4
+        with:
+          name: windows-smoke-evidence
+          path: dist/smoke/
+  source:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-go@v5
+        with:
+          go-version-file: backend/go.mod
+          cache-dependency-path: backend/go.sum
+      - run: go mod vendor
+        working-directory: backend
+      - run: python3 scripts/source-archive.py
+      - uses: actions/upload-artifact@v4
+        with:
+          name: source
+          path: dist/*source-with-dependencies.tar.gz
+  release:
+    if: startsWith(github.ref, 'refs/tags/v')
+    needs: [macos, windows, source]
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/download-artifact@v4
+        with:
+          pattern: macos-*
+          path: release
+          merge-multiple: true
+      - uses: actions/download-artifact@v4
+        with:
+          name: windows-x64
+          path: release
+      - uses: actions/download-artifact@v4
+        with:
+          name: source
+          path: release
+      - run: sha256sum * > SHA256SUMS.txt
+        working-directory: release
+      - name: Publish
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: gh release create "$GITHUB_REF_NAME" release/* --title "节点测评 $GITHUB_REF_NAME" --notes-file docs/RELEASE.md --verify-tag

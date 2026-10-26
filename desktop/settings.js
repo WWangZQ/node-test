@@ -1,0 +1,6 @@
+const fields=[['ProxyCheck','ProxyCheck Key'],['ipapi.is','ipapi.is Key'],['scam_user','Scamalytics 用户名'],['Scamalytics','Scamalytics Key'],['scam_region','Scamalytics 节点 US / EU'],['AbuseIPDB','AbuseIPDB Key'],['IPQS','IPQualityScore Key']];
+for(const [id,title]of fields){const label=document.createElement('label');label.textContent=title;const input=document.createElement('input');input.id=id;input.type=id.startsWith('scam_')?'text':'password';input.autocomplete='off';label.append(input);document.querySelector('#keys').append(label);}
+window.nodeTest.onEvent(event=>{if(event.type==='settings')for(const[id]of fields)document.getElementById(id).value=event.keys[id]||(id==='scam_region'?'US':'');});
+document.querySelector('#save').onclick=()=>{const keys=Object.fromEntries(fields.map(([id])=>[id,document.getElementById(id).value.trim()]));if(!['US','EU'].includes((keys.scam_region||'US').toUpperCase())){document.querySelector('#message').textContent='Scamalytics 节点请填写 US 或 EU';return;}window.nodeTest.send({cmd:'saveSettings',keys});};
+document.querySelector('#cancel').onclick=()=>window.nodeTest.send({cmd:'closeSettings'});
+document.querySelector('#keys').onsubmit=e=>e.preventDefault();

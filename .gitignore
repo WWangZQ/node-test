@@ -1,0 +1,12 @@
+bin/
+dist/
+node_modules/
+backend/vendor/
+backend/logs/
+logs/
+.DS_Store
+*.log
+.env*
+!*.example
+__pycache__/
+tests/*-result.json

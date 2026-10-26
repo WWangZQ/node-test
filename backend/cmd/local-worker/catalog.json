@@ -1,0 +1,338 @@
+[
+  {
+    "id": "OpenAI",
+    "category": "AI 服务",
+    "url": "https://api.openai.com/compliance/cookie_requirements",
+    "method": "legacy",
+    "default": true
+  },
+  {
+    "id": "Gemini",
+    "category": "AI 服务",
+    "url": "https://gemini.google.com/",
+    "method": "legacy",
+    "default": true
+  },
+  {
+    "id": "Claude",
+    "category": "AI 服务",
+    "url": "https://claude.ai/login",
+    "method": "claude",
+    "default": true
+  },
+  {
+    "id": "Grok",
+    "category": "AI 服务",
+    "url": "https://grok.com/",
+    "method": "ai",
+    "default": true
+  },
+  {
+    "id": "Perplexity",
+    "category": "AI 服务",
+    "url": "https://www.perplexity.ai/",
+    "method": "ai",
+    "default": true
+  },
+  {
+    "id": "Copilot",
+    "category": "AI 服务",
+    "url": "https://copilot.microsoft.com/",
+    "method": "ai",
+    "default": true
+  },
+  {
+    "id": "Meta AI",
+    "category": "AI 服务",
+    "url": "https://www.meta.ai/",
+    "method": "ai",
+    "default": true
+  },
+  {
+    "id": "Disney+",
+    "category": "全球流媒体",
+    "url": "https://www.disneyplus.com/",
+    "method": "legacy",
+    "default": true
+  },
+  {
+    "id": "Netflix",
+    "category": "全球流媒体",
+    "url": "https://www.netflix.com/",
+    "method": "legacy",
+    "default": true
+  },
+  {
+    "id": "YouTube",
+    "category": "全球流媒体",
+    "url": "https://www.youtube.com/premium",
+    "method": "legacy",
+    "default": true
+  },
+  {
+    "id": "Spotify",
+    "category": "全球流媒体",
+    "url": "https://open.spotify.com/",
+    "method": "legacy",
+    "default": true
+  },
+  {
+    "id": "Prime Video",
+    "category": "全球流媒体",
+    "url": "https://www.primevideo.com/",
+    "method": "media",
+    "default": false
+  },
+  {
+    "id": "HBO Max",
+    "category": "全球流媒体",
+    "url": "https://www.hbomax.com/",
+    "method": "media",
+    "default": false
+  },
+  {
+    "id": "Hulu",
+    "category": "全球流媒体",
+    "url": "https://www.hulu.com/",
+    "method": "web",
+    "default": false
+  },
+  {
+    "id": "Paramount+",
+    "category": "全球流媒体",
+    "url": "https://www.paramountplus.com/",
+    "method": "web",
+    "default": false
+  },
+  {
+    "id": "Peacock",
+    "category": "全球流媒体",
+    "url": "https://www.peacocktv.com/",
+    "method": "web",
+    "default": false
+  },
+  {
+    "id": "Discovery+",
+    "category": "全球流媒体",
+    "url": "https://www.discoveryplus.com/",
+    "method": "web",
+    "default": false
+  },
+  {
+    "id": "DAZN",
+    "category": "全球流媒体",
+    "url": "https://startup.core.indazn.com/misl/v5/Startup",
+    "method": "dazn",
+    "default": false
+  },
+  {
+    "id": "Apple TV+",
+    "category": "全球流媒体",
+    "url": "https://tv.apple.com/",
+    "method": "apple-web",
+    "default": true
+  },
+  {
+    "id": "Crunchyroll",
+    "category": "全球流媒体",
+    "url": "https://www.crunchyroll.com/",
+    "method": "web",
+    "default": false
+  },
+  {
+    "id": "TikTok",
+    "category": "全球流媒体",
+    "url": "https://www.tiktok.com/",
+    "method": "media",
+    "default": true
+  },
+  {
+    "id": "BBC iPlayer",
+    "category": "全球流媒体",
+    "url": "https://open.live.bbc.co.uk/mediaselector/6/select/version/2.0/mediaset/pc/vpid/bbc_one_london/format/json",
+    "method": "bbc",
+    "default": false
+  },
+  {
+    "id": "Bilibili 大陆",
+    "category": "港澳台与中国",
+    "url": "https://api.bilibili.com/pgc/player/web/playurl?avid=82846771&ep_id=307247&fnval=16",
+    "method": "bili",
+    "default": false
+  },
+  {
+    "id": "Bilibili 港澳台",
+    "category": "港澳台与中国",
+    "url": "https://api.bilibili.com/pgc/player/web/playurl?avid=18281381&cid=29892777&ep_id=183799&fnval=16",
+    "method": "bili",
+    "default": false
+  },
+  {
+    "id": "Bilibili 台湾",
+    "category": "港澳台与中国",
+    "url": "https://api.bilibili.com/pgc/player/web/playurl?avid=50762638&cid=100279344&ep_id=268176&fnval=16",
+    "method": "bili",
+    "default": false
+  },
+  {
+    "id": "巴哈姆特",
+    "category": "港澳台与中国",
+    "url": "https://ani.gamer.com.tw/",
+    "method": "web",
+    "default": false
+  },
+  {
+    "id": "TVB",
+    "category": "港澳台与中国",
+    "url": "https://www.tvb.com/",
+    "method": "web",
+    "default": false
+  },
+  {
+    "id": "MyTVSuper",
+    "category": "港澳台与中国",
+    "url": "https://www.mytvsuper.com/api/auth/getSession/self/",
+    "method": "mytv",
+    "default": false
+  },
+  {
+    "id": "Viu",
+    "category": "港澳台与中国",
+    "url": "https://www.viu.com/",
+    "method": "web",
+    "default": false
+  },
+  {
+    "id": "Catchplay",
+    "category": "港澳台与中国",
+    "url": "https://www.catchplay.com/",
+    "method": "web",
+    "default": false
+  },
+  {
+    "id": "KKTV",
+    "category": "港澳台与中国",
+    "url": "https://www.kktv.me/",
+    "method": "web",
+    "default": false
+  },
+  {
+    "id": "Line TV",
+    "category": "港澳台与中国",
+    "url": "https://www.linetv.tw/",
+    "method": "web",
+    "default": false
+  },
+  {
+    "id": "HamiVideo",
+    "category": "港澳台与中国",
+    "url": "https://hamivideo.hinet.net/",
+    "method": "web",
+    "default": false
+  },
+  {
+    "id": "4GTV",
+    "category": "港澳台与中国",
+    "url": "https://www.4gtv.tv/",
+    "method": "web",
+    "default": false
+  },
+  {
+    "id": "iQIYI",
+    "category": "港澳台与中国",
+    "url": "https://www.iq.com/",
+    "method": "web",
+    "default": false
+  },
+  {
+    "id": "LiTV",
+    "category": "港澳台与中国",
+    "url": "https://www.litv.tv/",
+    "method": "web",
+    "default": false
+  },
+  {
+    "id": "Abema",
+    "category": "日本与韩国",
+    "url": "https://api.abema.io/v1/ip/check?device=android",
+    "method": "abema",
+    "default": false
+  },
+  {
+    "id": "TVer",
+    "category": "日本与韩国",
+    "url": "https://tver.jp/",
+    "method": "web",
+    "default": false
+  },
+  {
+    "id": "U-NEXT",
+    "category": "日本与韩国",
+    "url": "https://video.unext.jp/",
+    "method": "web",
+    "default": false
+  },
+  {
+    "id": "Telasa",
+    "category": "日本与韩国",
+    "url": "https://www.telasa.jp/",
+    "method": "web",
+    "default": false
+  },
+  {
+    "id": "Radiko",
+    "category": "日本与韩国",
+    "url": "https://radiko.jp/area",
+    "method": "radiko",
+    "default": false
+  },
+  {
+    "id": "Niconico",
+    "category": "日本与韩国",
+    "url": "https://www.nicovideo.jp/",
+    "method": "web",
+    "default": false
+  },
+  {
+    "id": "Naver TV",
+    "category": "日本与韩国",
+    "url": "https://tv.naver.com/",
+    "method": "web",
+    "default": false
+  },
+  {
+    "id": "Steam",
+    "category": "游戏与其他",
+    "url": "https://store.steampowered.com/",
+    "method": "steam",
+    "default": true
+  },
+  {
+    "id": "Project Sekai",
+    "category": "游戏与其他",
+    "url": "https://pjsekai.sega.jp/",
+    "method": "web",
+    "default": false
+  },
+  {
+    "id": "Kancolle",
+    "category": "游戏与其他",
+    "url": "http://w00g.kancolle-server.com/kcscontents/news/",
+    "method": "web",
+    "default": false
+  },
+  {
+    "id": "Wikipedia",
+    "category": "游戏与其他",
+    "url": "https://en.wikipedia.org/w/api.php?action=query&meta=userinfo&uiprop=blockinfo&format=json",
+    "method": "wiki",
+    "default": true
+  },
+  {
+    "id": "Google",
+    "category": "搜索服务",
+    "url": "https://www.google.com/search?q=Google&hl=en&gbv=1",
+    "method": "google",
+    "default": true
+  }
+]
