@@ -9,6 +9,7 @@
 | RegionRestrictionCheck | 服务检测规则和接口流程参考；适配实现集中于 worker 的 media.go、ai.go、services.go | ef841d0a2910a44a6ca565e3a03de0f2282d83b3 | AGPL-3.0，根目录 LICENSE |
 | miaospeed | 服务探测规则参考 | 0234a01d9daa5248bc9cf1a7bd63937b7cde2c68 | AGPL-3.0，LICENSES/miaospeed.txt |
 | unlock-checker | 解锁检测行为参考 | c964d8dfcc8316159200b52c3f3e18e2b832c864 | GPL-3.0，LICENSES/unlock-checker.txt |
+| Inno Setup | Windows 安装程序 | 7.1.0 | Inno Setup License，LICENSES/innosetup.txt |
 | Electron | Windows 桌面运行时，包含 Chromium、Node.js 等组件 | package-lock.json 固定版本 | MIT 及随二进制提供的 LICENSE、LICENSES.chromium.html |
 | Go 及间接模块 | worker 编译器与链接依赖 | backend/go.mod、go.sum | 各模块许可证随完整依赖源码包保留 |
 

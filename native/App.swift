@@ -107,7 +107,7 @@ final class App: NSObject, NSApplicationDelegate, WKScriptMessageHandler, WKNavi
             if saveRiskKeys(keys){message("数据源设置已保存到 Mac 钥匙串，下次测试生效。")}else{message("钥匙串保存失败，请检查系统授权。",error:true)}
         }
     }
-    @objc func about(){let a=NSAlert();a.messageText="节点测评 1.3.1";a.informativeText="本地全订阅测速与解锁检测\n基于 Mihomo 与 Clash SpeedTest Pro；发行版 AGPL-3.0\n所有检测在本机执行。订阅及节点凭据仅保留在运行内存。\n源码：https://github.com/WWangZQ/node-test；许可证位于 Resources/licenses。";a.runModal()}
+    @objc func about(){let a=NSAlert();a.messageText="节点测评 1.3.2";a.informativeText="本地全订阅测速与解锁检测\n基于 Mihomo 与 Clash SpeedTest Pro；发行版 AGPL-3.0\n所有检测在本机执行。订阅及节点凭据仅保留在运行内存。\n源码：https://github.com/WWangZQ/node-test；许可证位于 Resources/licenses。";a.runModal()}
     @objc func showResults(){NSWorkspace.shared.open(support.appendingPathComponent("reports"))}
     func applicationShouldTerminateAfterLastWindowClosed(_ sender: NSApplication)->Bool{true}
     func applicationWillTerminate(_ n: Notification){stopWorker()}

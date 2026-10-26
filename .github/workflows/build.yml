@@ -37,14 +37,12 @@ jobs:
           go build -trimpath -o ../bin/node-worker ./cmd/local-worker
           cd ..
           python3 tests/test_worker.py
-      - name: Package
-        run: |
-          VERSION=$(cat VERSION)
-          ditto -c -k --keepParent "dist/macos-${{ matrix.arch }}/节点测评.app" "dist/NodeTest-${VERSION}-macos-${{ matrix.arch }}.zip"
+      - name: Package and verify DMG
+        run: python3 scripts/package-macos.py --arch ${{ matrix.arch }}
       - uses: actions/upload-artifact@v4
         with:
           name: macos-${{ matrix.arch }}
-          path: dist/NodeTest-*.zip
+          path: dist/NodeTest-*.dmg
   windows:
     runs-on: windows-latest
     steps:
@@ -79,19 +77,29 @@ jobs:
           $p = Start-Process -FilePath "$PWD/dist/NodeTest-win32-x64/NodeTest.exe" -ArgumentList '--smoke-test' -Wait -PassThru
           if ($p.ExitCode -ne 0) { throw "Desktop smoke test failed: $($p.ExitCode)" }
           if (!(Test-Path dist/smoke/smoke-result.json)) { throw 'Missing smoke test evidence' }
-      - name: Package
+      - name: Build installer
+        shell: pwsh
+        run: ./scripts/build-windows-installer.ps1
+      - name: Verify install, launch and uninstall
+        shell: pwsh
+        run: ./scripts/test-windows-installer.ps1
+      - name: Package portable edition
         shell: pwsh
         run: |
           $version = (Get-Content VERSION).Trim()
-          Compress-Archive -Path dist/NodeTest-win32-x64 -DestinationPath "dist/NodeTest-$version-windows-x64.zip"
+          Compress-Archive -Path dist/NodeTest-win32-x64 -DestinationPath "dist/NodeTest-$version-windows-x64-Portable.zip"
       - uses: actions/upload-artifact@v4
         with:
           name: windows-x64
-          path: dist/NodeTest-*.zip
+          path: |
+            dist/NodeTest-*-Setup.exe
+            dist/NodeTest-*-Portable.zip
       - uses: actions/upload-artifact@v4
         with:
           name: windows-smoke-evidence
-          path: dist/smoke/
+          path: |
+            dist/smoke/
+            dist/installer-smoke/
   source:
     runs-on: ubuntu-latest
     steps:

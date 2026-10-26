@@ -20,4 +20,7 @@ jobs:
           GH_TOKEN: ${{ github.token }}
         run: |
           version=$(cat VERSION)
-          gh release edit "v${version}" --notes-file docs/RELEASE.md
+          tag=$(gh api "repos/$GITHUB_REPOSITORY/releases" --jq ".[] | select(.tag_name == \"v${version}\") | .tag_name")
+          if [ -n "$tag" ]; then
+            gh release edit "$tag" --notes-file docs/RELEASE.md
+          fi

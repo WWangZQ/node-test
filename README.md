@@ -10,9 +10,11 @@
 
 | 系统 | 下载文件 | 启动方式 |
 |---|---|---|
-| Apple Silicon Mac | macos-arm64.zip | 解压，将节点测评.app 拖入应用程序，双击打开 |
-| Intel Mac | macos-x86_64.zip | 解压，将节点测评.app 拖入应用程序，双击打开 |
-| Windows 10 / 11，64 位 | windows-x64.zip | 完整解压，打开文件夹中的 NodeTest.exe |
+| Apple Silicon Mac | macos-arm64.dmg | 双击打开，将节点测评拖入 Applications |
+| Intel Mac | macos-x86_64.dmg | 双击打开，将节点测评拖入 Applications |
+| Windows 10 / 11，64 位 | windows-x64-Setup.exe | 双击安装，通过桌面或开始菜单启动 |
+
+Windows 便携版另附 Portable.zip，可解压后直接运行。
 
 首次打开遇到系统拦截时：Mac 在系统设置 → 隐私与安全性中选择仍要打开；Windows 在提示窗口中选择更多信息 → 仍要运行。
 
