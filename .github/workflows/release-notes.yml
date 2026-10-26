@@ -1,0 +1,23 @@
+name: Sync release notes
+on:
+  push:
+    branches: [main]
+    paths:
+      - docs/RELEASE.md
+      - .github/workflows/release-notes.yml
+permissions:
+  contents: write
+concurrency:
+  group: release-notes
+  cancel-in-progress: false
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Update release description
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          version=$(cat VERSION)
+          gh release edit "v${version}" --notes-file docs/RELEASE.md
