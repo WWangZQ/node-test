@@ -5,7 +5,7 @@
 - 启动后自动检查新版，点击下载并重启完成升级。
 - Cloudflare 连接失败时依次尝试 OVH、Vultr SG，显示实际测速来源。
 - 分开显示地址用途与 ISP、Fixed ISP、Wireless 等接入信息。
-- 修复 IP 数据查询路径和 Scamalytics 请求地址，记录账户配置错误。
+- 修复 IP 查询失败问题，完善 API 配置错误提示。
 
 ## 安装
 
