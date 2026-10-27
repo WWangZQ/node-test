@@ -59,7 +59,7 @@ Name: "{autodesktop}\节点测评"; Filename: "{app}\NodeTest.exe"; Tasks: deskt
 [Run]
 Filename: "{app}\NodeTest.exe"; Description: "{cm:LaunchApp}"; Flags: nowait postinstall skipifsilent
 
-Filename: "{app}\NodeTest.exe"; Parameters: "{code:UpdateArguments}"; Flags: nowait runhidden; Check: IsUpdate
+Filename: "{app}\NodeTest.exe"; Parameters: "{code:UpdateArguments}"; Flags: nowait; Check: IsUpdate
 
 [Code]
 function IsUpdate: Boolean;
