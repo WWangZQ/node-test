@@ -3,6 +3,7 @@ const assert=require('node:assert/strict');
 const fs=require('node:fs/promises'),path=require('node:path');
 module.exports=async({win,controller,root,app})=>{
  const title=await win.webContents.executeJavaScript('document.querySelector("h1").textContent');assert.equal(title,'节点测评');
+ assert.equal(await win.webContents.executeJavaScript("document.querySelector('#check-updates').textContent"),'检查更新');
  const {safeStorage}=require('electron');
  assert.equal(await safeStorage.isAsyncEncryptionAvailable(),true);
  const secret='fixture-key-never-saved';assert.equal((await safeStorage.decryptStringAsync(await safeStorage.encryptStringAsync(secret))).result,secret);

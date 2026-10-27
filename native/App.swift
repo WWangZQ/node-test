@@ -25,6 +25,7 @@ final class App: NSObject, NSApplicationDelegate, WKScriptMessageHandler, WKNavi
     var report: [String: Any]?
     var busy = false
     var importing = false
+    lazy var updater=AppUpdater(busy:{[weak self] in self?.busy == true || self?.importing == true},message:{[weak self] text,error in self?.message(text,error:error)})
     var loader:SubscriptionLoader?
     var cancelled = false
     var current: Process?
@@ -50,6 +51,7 @@ final class App: NSObject, NSApplicationDelegate, WKScriptMessageHandler, WKNavi
         window.center()
         window.setFrameAutosaveName("LocalNodeTest.Main")
         makeMenu()
+        DispatchQueue.main.asyncAfter(deadline:.now()+12){self.updater.check(automatic:true)}
         let ui = Bundle.main.resourceURL!.appendingPathComponent("ui")
         web.loadFileURL(ui.appendingPathComponent("index.html"), allowingReadAccessTo: ui)
         window.makeKeyAndOrderFront(nil)
@@ -60,6 +62,7 @@ final class App: NSObject, NSApplicationDelegate, WKScriptMessageHandler, WKNavi
         let appMenu = NSMenu(); mainItem.submenu = appMenu
         appMenu.addItem(withTitle: "关于节点测评", action: #selector(about), keyEquivalent: "")
         appMenu.addItem(withTitle:"IP 数据源设置…", action:#selector(riskSettings), keyEquivalent:",")
+        appMenu.addItem(withTitle:"检查更新…",action:#selector(checkUpdates),keyEquivalent:"")
         appMenu.addItem(.separator())
         appMenu.addItem(withTitle: "退出节点测评", action: #selector(NSApplication.terminate(_:)), keyEquivalent: "q")
         let fileItem = NSMenuItem(); menu.addItem(fileItem); let fileMenu = NSMenu(title:"文件");fileItem.submenu=fileMenu
@@ -75,6 +78,7 @@ final class App: NSObject, NSApplicationDelegate, WKScriptMessageHandler, WKNavi
         winMenu.addItem(withTitle:"最小化",action:#selector(NSWindow.miniaturize(_:)),keyEquivalent:"m")
         NSApp.mainMenu=menu
     }
+    @objc func checkUpdates(){updater.check()}
     func readRiskKeys()->[String:String]? {
         let query:[String:Any]=[kSecClass as String:kSecClassGenericPassword,kSecAttrService as String:"io.github.WWangZQ.node-test.risk",kSecAttrAccount as String:"api-keys",kSecReturnData as String:true,kSecMatchLimit as String:kSecMatchLimitOne]
         var item:CFTypeRef?;let status=SecItemCopyMatching(query as CFDictionary,&item)
@@ -107,7 +111,7 @@ final class App: NSObject, NSApplicationDelegate, WKScriptMessageHandler, WKNavi
             if saveRiskKeys(keys){message("数据源设置已保存到 Mac 钥匙串，下次测试生效。")}else{message("钥匙串保存失败，请检查系统授权。",error:true)}
         }
     }
-    @objc func about(){let a=NSAlert();a.messageText="节点测评 1.3.2";a.informativeText="本地全订阅测速与解锁检测\n基于 Mihomo 与 Clash SpeedTest Pro；发行版 AGPL-3.0\n所有检测在本机执行。订阅及节点凭据仅保留在运行内存。\n源码：https://github.com/WWangZQ/node-test；许可证位于 Resources/licenses。";a.runModal()}
+    @objc func about(){let a=NSAlert();a.messageText="节点测评 1.4.0";a.informativeText="本地全订阅测速与解锁检测\n基于 Mihomo 与 Clash SpeedTest Pro；发行版 AGPL-3.0\n所有检测在本机执行。订阅及节点凭据仅保留在运行内存。\n源码：https://github.com/WWangZQ/node-test；许可证位于 Resources/licenses。";a.runModal()}
     @objc func showResults(){NSWorkspace.shared.open(support.appendingPathComponent("reports"))}
     func applicationShouldTerminateAfterLastWindowClosed(_ sender: NSApplication)->Bool{true}
     func applicationWillTerminate(_ n: Notification){stopWorker()}
@@ -124,7 +128,8 @@ final class App: NSObject, NSApplicationDelegate, WKScriptMessageHandler, WKNavi
         case "riskSettings":riskSettings()
         case "loadFile":openFile()
         case "loadURL":if let u=b["url"] as? String{loadURL(u)}
-        case "start":start(b["options"] as? [String:Any] ?? [:])
+        case "checkUpdates":updater.check()
+        case "start":if updater.active{self.message("更新准备中，请稍候。",error:false);return};start(b["options"] as? [String:Any] ?? [:])
         case "cancel":stopWorker();self.message("正在停止测试，已完成的结果会保留。")
         case "save":save(b)
         case "reference":if let text=b["url"] as? String,let url=URL(string:text),url.scheme=="https",["ipleak.net","peanutdl.com","ipinfo.cv","ip.net.coffee","ippure.com","proxycheck.io","ip.nc.gy","support.claude.com"].contains(url.host ?? ""){NSWorkspace.shared.open(url)}
@@ -184,7 +189,7 @@ final class App: NSObject, NSApplicationDelegate, WKScriptMessageHandler, WKNavi
         guard let riskKeys = (risk ? readRiskKeys():[:]) else {message("无法读取 IP 数据源钥匙串，请允许访问后重试。",error:true);return}
         let ns=nodes;busy=true;lock.lock();cancelled=false;lock.unlock()
         var rows=ns.enumerated().map{(i,n)->[String:Any] in ["name":String(String(describing:n["name"] ?? "节点 \(i+1)").prefix(200)),"type":String(describing:n["type"] ?? "unknown"),"status":"pending","services":[:],"samples":[]]}
-        var r:[String:Any]=["id":UUID().uuidString,"name":sourceName,"status":"running","demo":false,"created":date(),"rows":rows,"settings":settings,"units":["speed":"MB/s","latency":"ms","bytes":"bytes"],"probe_version":"1.3","engine":"mihomo 1.19.10 / Clash SpeedTest Pro 5d86384 + local worker"]
+        var r:[String:Any]=["id":UUID().uuidString,"name":sourceName,"status":"running","demo":false,"created":date(),"rows":rows,"settings":settings,"units":["speed":"MB/s","latency":"ms","bytes":"bytes"],"probe_version":"1.4.0","engine":"mihomo 1.19.10 / Clash SpeedTest Pro 5d86384 + local worker"]
         report=r;emit(["type":"report","report":r]);message("正在逐个测试节点，完成一行就会更新一行。")
         queue.async{
             var riskCache:[String:Any]=[:]

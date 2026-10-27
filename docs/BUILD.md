@@ -28,6 +28,7 @@ python3 scripts/package-macos.py --arch x86_64
 New-Item -ItemType Directory -Force bin
 cd backend
 go build -trimpath -o ../bin/node-worker.exe ./cmd/local-worker
+go build -trimpath -o ../bin/node-updater.exe ./cmd/local-updater
 cd ..
 npm ci
 npm run package:windows
@@ -50,3 +51,9 @@ go mod vendor
 cd ..
 python3 scripts/source-archive.py
 ```
+
+## 应用内更新
+
+更新助手读取本仓库最新正式 Release，按系统架构选择安装包，并核对 GitHub 提供的 SHA256 摘要和文件长度。Mac 在同一文件系统暂存新版，验证应用身份、版本与代码完整性后替换；替换失败时恢复原应用。Windows 调用 Inno Setup 升级安装并重启应用。
+
+发布流程继续使用现有安装包命名和正式版本标签，后续版本自动进入更新通道。

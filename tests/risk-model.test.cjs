@@ -9,7 +9,7 @@ assert.equal(R.summarize(data,'203.0.113.2').coverage,0,'different IP must not i
 assert.equal(R.summarize({},ip).proxy.no.length,0,'missing source is not negative');
 const missing=src('ipapi.is',{flags:{is_datacenter:false,is_proxy:null},network_type:''});
 assert.equal(R.network(missing),'未识别','not hosting does not imply residential');assert.equal(R.proxy(missing),null);
-const tie=R.summarize({IPPure:data.IPPure,NCGY:data.NCGY},ip);assert.equal(tie.majority,'并列');assert.equal(tie.worst,'机房');
+const tie=R.summarize({IPPure:data.IPPure,NCGY:data.NCGY},ip);assert.equal(tie.majority,'机房(1) / 住宅(1)');assert.equal(tie.worst,'机房');
 const duplicate=R.summarize({NCGY:data.NCGY,Scamalytics:{...data.NCGY}},ip);assert.equal(duplicate.proxy.yes.length,1,'source aliases do not duplicate votes');
 assert.equal(R.summarize({IPPure:src('IPPure',{flags:{isResidential:true}})},ip).coverage,1);
 assert.equal(R.network(src('IPPure',{flags:{isResidential:false}})),'非住宅');
@@ -17,3 +17,9 @@ assert.equal(R.proxy(src('NCGY',{flags:{is_hosting:true}})),null,'hosting alone 
 console.log('IP aggregation assertions passed');
 
 assert.equal(R.proxy(src('AbuseIPDB',{flags:{isTor:false}})),null,'Tor negative does not establish proxy negative');
+
+const hk=R.summarize({IPPure:src('IPPure',{network_type:'住宅',flags:{isResidential:true}}),ProxyCheck:src('ProxyCheck',{network_type:'Wireless'}),AbuseIPDB:src('AbuseIPDB',{network_type:'Fixed Line ISP'})},ip);
+assert.equal(hk.majority,'住宅');assert.equal(hk.worst,'住宅');assert.equal(hk.conflict,false);assert.deepEqual(hk.accessCounts,{'Wireless':1,'Fixed ISP':1});
+assert.equal(R.access(src('ProxyCheck',{network_type:'Wireless'})),'Wireless');
+assert.equal(R.access(src('ipapi.is',{network_type:'isp'})),'ISP');
+assert.equal(R.summarize({AbuseIPDB:src('AbuseIPDB',{network_type:'Fixed Line ISP'})},ip).majority,'用途待定');

@@ -1,7 +1,9 @@
 package main
 
 import (
+	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"io"
 	"net"
@@ -21,6 +23,7 @@ type RiskSource struct {
 	Score       *float64        `json:"score,omitempty"`
 	Scale       string          `json:"scale,omitempty"`
 	NetworkType string          `json:"network_type,omitempty"`
+	QueryRoute  string          `json:"query_route,omitempty"`
 	Flags       map[string]bool `json:"flags,omitempty"`
 	Country     string          `json:"country,omitempty"`
 	ASN         string          `json:"asn,omitempty"`
@@ -142,6 +145,16 @@ func requestRisk(c *http.Client, source, ip, endpoint string, headers ...map[str
 	if e != nil {
 		r.Status = "error"
 		r.Detail = "数据源连接失败"
+		var ne net.Error
+		if errors.As(e, &ne) && ne.Timeout() {
+			r.Detail = "数据源请求超时"
+		}
+		if errors.Is(e, io.ErrClosedPipe) {
+			r.Detail = "数据源连接被关闭"
+		}
+		if strings.Contains(e.Error(), "malformed HTTP response") {
+			r.Detail = "数据源 HTTP 协议协商失败"
+		}
 		return r
 	}
 	defer resp.Body.Close()
@@ -158,6 +171,10 @@ func requestRisk(c *http.Client, source, ip, endpoint string, headers ...map[str
 	if resp.StatusCode != 200 {
 		r.Status = "error"
 		r.Detail = fmt.Sprintf("数据源 HTTP %d", resp.StatusCode)
+		if source == "Scamalytics" && resp.StatusCode == 404 {
+			r.Status = "config"
+			r.Detail = "Scamalytics 账户路径不存在，请核对 API 用户名与 US / EU 节点"
+		}
 		return r
 	}
 	var doc map[string]any
@@ -167,7 +184,21 @@ func requestRisk(c *http.Client, source, ip, endpoint string, headers ...map[str
 	}
 	return parseRisk(source, ip, doc)
 }
-func runRisk(c *http.Client, in Input, r *Row) {
+
+// A known-IP database lookup uses the current network, independently of the
+// tested node. Exit discovery still runs through that node. These clients never
+// modify OS proxy settings or bind the current connection to the test interface.
+func makeLookupClient(ctx context.Context) *http.Client {
+	tr := http.DefaultTransport.(*http.Transport).Clone()
+	tr.ForceAttemptHTTP2 = true
+	tr.DisableKeepAlives = true
+	tr.TLSHandshakeTimeout = 10 * time.Second
+	tr.ResponseHeaderTimeout = 15 * time.Second
+	return &http.Client{Transport: &boundTransport{ctx: ctx, tr: tr}, Timeout: 15 * time.Second}
+}
+func runRisk(ctx context.Context, c *http.Client, in Input, r *Row) {
+	lookup := makeLookupClient(ctx)
+	defer lookup.CloseIdleConnections()
 	r.IPRisk = map[string]RiskSource{}
 	r.RiskUpdates = map[string]map[string]RiskSource{}
 	r.IPProfiles = map[string]map[string]RiskSource{}
@@ -194,7 +225,8 @@ func runRisk(c *http.Client, in Input, r *Row) {
 			}
 		}
 	}
-	for name, v := range queryRiskIP(c, in, r, r.IP) {
+	for name, v := range queryRiskIP(lookup, in, r, r.IP) {
+		v.QueryRoute = "current_connection"
 		r.IPRisk[name] = v
 	}
 	r.IPProfiles[r.IP] = r.IPRisk
@@ -204,7 +236,11 @@ func runRisk(c *http.Client, in Input, r *Row) {
 			continue
 		}
 		if _, ok := r.IPProfiles[ip]; !ok {
-			r.IPProfiles[ip] = queryRiskIP(c, in, r, ip)
+			r.IPProfiles[ip] = queryRiskIP(lookup, in, r, ip)
+			for name, v := range r.IPProfiles[ip] {
+				v.QueryRoute = "current_connection"
+				r.IPProfiles[ip][name] = v
+			}
 		}
 		if name == "Claude" {
 			r.ClaudeRisk = r.IPProfiles[ip]
@@ -254,6 +290,13 @@ func queryRiskIP(c *http.Client, in Input, r *Row, ip string) map[string]RiskSou
 			out[name] = v
 			continue
 		}
+		if strings.Contains(key, "://") || (name == "Scamalytics" && strings.ContainsAny(in.RiskKeys["scam_user"], "/?#")) {
+			v.Status = "config"
+			v.Detail = "请填写正式 API Key；网页链接需先打开并读取其中的 API 凭据"
+			out[name] = v
+			r.RiskStopped[name] = v.Status
+			continue
+		}
 		if name == "ProxyCheck" && (in.ProxyCheckRemaining <= r.ProxyCheckRequests || r.ProxyCheckLimited) {
 			v.Status = "skipped"
 			v.Detail = "本机每日查询预算已用完或该来源已限流"
@@ -279,7 +322,7 @@ func queryRiskIP(c *http.Client, in Input, r *Row, ip string) map[string]RiskSou
 			if in.RiskKeys["scam_region"] == "EU" {
 				host = "api12.scamalytics.com"
 			}
-			endpoint = "https://" + host + "/v3/" + url.PathEscape(in.RiskKeys["scam_user"]) + "?key=" + url.QueryEscape(key) + "&ip=" + url.QueryEscape(ip)
+			endpoint = "https://" + host + "/v3/" + url.PathEscape(in.RiskKeys["scam_user"]) + "/?key=" + url.QueryEscape(key) + "&ip=" + url.QueryEscape(ip)
 		case "AbuseIPDB":
 			endpoint = "https://api.abuseipdb.com/api/v2/check?maxAgeInDays=90&ipAddress=" + url.QueryEscape(ip)
 			headers["Key"] = key
@@ -288,7 +331,7 @@ func queryRiskIP(c *http.Client, in Input, r *Row, ip string) map[string]RiskSou
 		}
 		v = requestRisk(c, name, ip, endpoint, headers)
 		out[name] = v
-		if v.Status == "limited" || v.Status == "auth" {
+		if v.Status == "limited" || v.Status == "auth" || v.Status == "config" {
 			r.RiskStopped[name] = v.Status
 			if name == "ProxyCheck" {
 				r.ProxyCheckLimited = true

@@ -10,7 +10,9 @@ res=app/'Contents/Resources';(app/'Contents/MacOS').mkdir(parents=True);res.mkdi
 env={**os.environ,'GOOS':'darwin','GOARCH':goarch,'CGO_ENABLED':'0'}
 def run(*cmd,**kw):subprocess.run([str(x) for x in cmd],check=True,**kw)
 run(os.environ.get('GO_BINARY','go'),'build','-trimpath','-ldflags=-s -w','-o',res/'node-worker','./cmd/local-worker',cwd=ROOT/'backend',env=env)
-run('swiftc','-swift-version','5','-O','-target',f'{arch}-apple-macosx13.0','-framework','Cocoa','-framework','WebKit','-framework','Security',ROOT/'native/App.swift','-o',app/'Contents/MacOS/LocalNodeTest')
+run(os.environ.get('GO_BINARY','go'),'build','-trimpath','-ldflags=-s -w','-o',res/'node-updater','./cmd/local-updater',cwd=ROOT/'backend',env=env)
+main=app.parent/'main.swift';main.write_text((ROOT/'native/App.swift').read_text())
+run('swiftc','-swift-version','5','-O','-target',f'{arch}-apple-macosx13.0','-framework','Cocoa','-framework','WebKit','-framework','Security',main,ROOT/'native/Updater.swift','-o',app/'Contents/MacOS/LocalNodeTest')
 shutil.copy2(ROOT/'native/Info.plist',app/'Contents/Info.plist')
 shutil.copytree(ROOT/'static',res/'ui');shutil.copytree(ROOT/'LICENSES',res/'licenses')
 for file in ['LICENSE','THIRD_PARTY_NOTICES.md','README.md']:shutil.copy2(ROOT/file,res/'licenses'/file)

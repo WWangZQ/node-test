@@ -1,6 +1,6 @@
 {
   "name": "node-test",
-  "version": "1.3.2",
+  "version": "1.4.0",
   "description": "Local subscription speed, service availability and multi-source IP testing",
   "private": true,
   "main": "desktop/main.cjs",
@@ -9,8 +9,11 @@
   "repository": "https://github.com/WWangZQ/node-test",
   "scripts": {
     "start": "electron .",
-    "test": "node tests/risk-model.test.cjs && node --test tests/controller.test.cjs",
+    "test": "node tests/risk-model.test.cjs && node --test tests/controller.test.cjs tests/updater.test.cjs",
     "package:windows": "node scripts/package-windows.cjs"
   },
-  "devDependencies": {"electron": "45.0.0", "@electron/packager": "20.3.0"}
+  "devDependencies": {
+    "electron": "45.0.0",
+    "@electron/packager": "20.3.0"
+  }
 }

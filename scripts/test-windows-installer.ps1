@@ -19,6 +19,19 @@ try {
     $proc = Start-Process -FilePath "$destination/NodeTest.exe" -ArgumentList '--smoke-test' -Wait -PassThru
     if ($proc.ExitCode -ne 0) { throw "Installed app smoke test failed: $($proc.ExitCode)" }
     if (!(Test-Path "$evidence/smoke-result.json")) { throw 'Installed app smoke evidence missing' }
+    $preserve = Join-Path $env:APPDATA 'NodeTestPublic/upgrade-preserve.txt'
+    New-Item -ItemType Directory -Force (Split-Path $preserve) | Out-Null
+    Set-Content $preserve 'retained user data'
+    Remove-Item "$evidence/smoke-result.json"
+    $proc = Start-Process -FilePath $installer -ArgumentList @('/VERYSILENT','/SUPPRESSMSGBOXES','/NORESTART','/UPDATE=1','/UPDATETEST=1',"/DIR=`"$destination`"", "/LOG=`"$evidence/update.log`"") -Wait -PassThru
+    if ($proc.ExitCode -ne 0) { throw "Update install failed: $($proc.ExitCode)" }
+    $deadline = (Get-Date).AddSeconds(90)
+    while (!(Test-Path "$evidence/smoke-result.json") -and (Get-Date) -lt $deadline) { Start-Sleep -Seconds 1 }
+    if (!(Test-Path "$evidence/smoke-result.json")) { throw 'Updated application did not relaunch' }
+    $updated = Get-Content "$evidence/smoke-result.json" | ConvertFrom-Json
+    if ($updated.version -ne $version) { throw 'Relaunched app version mismatch' }
+    if ((Get-Content $preserve).Trim() -ne 'retained user data') { throw 'Update changed user data' }
+
 } finally {
     if (Test-Path "$destination/unins000.exe") {
         $proc = Start-Process -FilePath "$destination/unins000.exe" -ArgumentList @('/VERYSILENT','/SUPPRESSMSGBOXES','/NORESTART',"/LOG=`"$evidence/uninstall.log`"") -Wait -PassThru
@@ -28,5 +41,5 @@ try {
 foreach ($removed in @("$destination/NodeTest.exe", "$destination/resources/node-worker.exe", $shortcut, $startMenu)) {
     if (Test-Path $removed) { throw "Uninstall left behind component: $removed" }
 }
-@{version=$version; installation='passed'; shortcuts='passed'; installedApp='passed'; uninstall='passed'} | ConvertTo-Json | Set-Content "$evidence/installer-result.json"
+@{version=$version; installation='passed'; shortcuts='passed'; installedApp='passed'; updateRelaunch='passed'; preservedData='passed'; uninstall='passed'} | ConvertTo-Json | Set-Content "$evidence/installer-result.json"
 Write-Output 'Installer, shortcuts, installed application and uninstall verified'

@@ -3,7 +3,6 @@ package main
 
 import (
 	"context"
-	"crypto/tls"
 	"encoding/base64"
 	"encoding/json"
 	"fmt"
@@ -12,7 +11,6 @@ import (
 	"math"
 	"net"
 	"net/http"
-	"net/http/httptrace"
 	"os"
 	"strconv"
 	"strings"
@@ -66,6 +64,9 @@ type Service struct {
 	Detail      string `json:"detail"`
 }
 type Row struct {
+	LatencySource      string                           `json:"latency_source,omitempty"`
+	DownloadSource     string                           `json:"download_source,omitempty"`
+	SpeedAttempts      []SpeedAttempt                   `json:"speed_attempts,omitempty"`
 	IPProfiles         map[string]map[string]RiskSource `json:"ip_profiles,omitempty"`
 	RiskStopped        map[string]string                `json:"risk_stopped,omitempty"`
 	IPRisk             map[string]RiskSource            `json:"ip_risk,omitempty"`
@@ -139,43 +140,7 @@ func main() {
 	defer cancel()
 	client := makeClient(ctx, p, time.Duration(in.Timeout)*time.Second)
 	defer client.CloseIdleConnections()
-	// Fresh connection per probe: target TLS handshake and whole HTTP response latency.
-	var tlsSum, latSum float64
-	ok, tlsOK := 0, 0
-	for i := 0; i < 3; i++ {
-		start := time.Now()
-		var t0 time.Time
-		var tlsDur float64
-		trace := &httptrace.ClientTrace{TLSHandshakeStart: func() { t0 = time.Now() }, TLSHandshakeDone: func(_ tls.ConnectionState, e error) {
-			if e == nil && !t0.IsZero() {
-				tlsDur = float64(time.Since(t0).Microseconds()) / 1000
-			}
-		}}
-		req, _ := http.NewRequestWithContext(httptrace.WithClientTrace(ctx, trace), "GET", strings.TrimRight(in.Server, "/")+"/__down?bytes=0", nil)
-		resp, e := client.Do(req)
-		if e == nil {
-			_, _ = io.Copy(io.Discard, io.LimitReader(resp.Body, 1024))
-			resp.Body.Close()
-			if resp.StatusCode == 200 {
-				latSum += float64(time.Since(start).Microseconds()) / 1000
-				ok++
-				if tlsDur > 0 {
-					tlsSum += tlsDur
-					tlsOK++
-				}
-			}
-		}
-	}
-	r.ProbeFailure = ptr(float64(3-ok) * 100 / 3)
-	if ok > 0 {
-		r.HTTPS = ptr(latSum / float64(ok))
-		if tlsOK > 0 {
-			r.TLS = ptr(tlsSum / float64(tlsOK))
-		}
-		r.Status = "complete"
-	} else {
-		r.Error = "测速站连接失败"
-	}
+	ok := measureLatency(ctx, p, in, &r)
 	if in.Mode != "speed" {
 		runServices(ctx, p, in, &r)
 		for _, s := range r.Services {
@@ -187,7 +152,7 @@ func main() {
 		}
 	}
 	if in.IPRisk {
-		runRisk(client, in, &r)
+		runRisk(ctx, client, in, &r)
 	}
 	if in.IPInfo && r.IP == "" {
 		resp, e := client.Get("https://ipwho.is/")
@@ -209,7 +174,7 @@ func main() {
 			resp.Body.Close()
 		}
 	}
-	if in.Mode != "unlock" && ok > 0 {
+	if in.Mode != "unlock" {
 		download(ctx, p, in, &r)
 	}
 	if in.Mode == "unlock" && (ok > 0 || r.Status == "partial") {
@@ -271,67 +236,6 @@ func (b *boundedBody) Read(p []byte) (int, error) {
 	return n, e
 }
 func (b *boundedBody) Close() error { b.done(); return b.ReadCloser.Close() }
-func download(ctx context.Context, p constant.Proxy, in Input, r *Row) {
-	c := makeClient(ctx, p, time.Duration(in.Seconds)*time.Second)
-	defer c.CloseIdleConnections()
-	start := time.Now()
-	resp, e := c.Get(fmt.Sprintf("%s/__down?bytes=%d", strings.TrimRight(in.Server, "/"), in.Megabytes*1000000))
-	if e != nil {
-		r.Status = "partial"
-		r.Error = "下载测速失败"
-		return
-	}
-	defer resp.Body.Close()
-	if resp.StatusCode != 200 {
-		r.Status = "partial"
-		r.Error = "测速站返回非成功状态"
-		return
-	}
-	buf := make([]byte, 65536)
-	last := start
-	var bucket int64
-	var readErr error
-	for {
-		n, e := resp.Body.Read(buf)
-		r.Bytes += int64(n)
-		bucket += int64(n)
-		now := time.Now()
-		span := now.Sub(last).Seconds()
-		if span >= 1 {
-			r.Samples = append(r.Samples, round(float64(bucket)/span/1e6))
-			last = now
-			bucket = 0
-		}
-		if e != nil {
-			readErr = e
-			break
-		}
-		if r.Bytes >= int64(in.Megabytes)*1000000 {
-			break
-		}
-	}
-	duration := time.Since(start).Seconds()
-	if r.Bytes == 0 {
-		r.Status = "partial"
-		r.Error = "未下载到测速数据"
-		return
-	}
-	if readErr != nil && readErr != io.EOF && duration < float64(in.Seconds)*0.9 {
-		r.Status = "partial"
-		r.Error = "下载中断，速度仅供参考"
-	}
-	if tail := time.Since(last).Seconds(); bucket > 0 && (tail >= 0.5 || len(r.Samples) == 0) {
-		r.Samples = append(r.Samples, round(float64(bucket)/tail/1e6))
-	}
-	r.Average = ptr(float64(r.Bytes) / duration / 1e6)
-	peak := 0.0
-	for _, v := range r.Samples {
-		if v > peak {
-			peak = v
-		}
-	}
-	r.Peak = ptr(peak)
-}
 func parse(content string) {
 	b := []byte(strings.TrimSpace(content))
 	var doc struct {

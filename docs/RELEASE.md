@@ -1,22 +1,18 @@
-节点测评 v1.3.2：提供 Mac DMG 和 Windows 安装程序。
+节点测评 v1.4.0：应用内更新、备用测速源与 IP 分类修复。
 
-## 下载与安装
+## 更新内容
 
-- [Apple Silicon Mac](https://github.com/WWangZQ/node-test/releases/download/v1.3.2/NodeTest-1.3.2-macos-arm64.dmg)：双击 DMG，将节点测评拖入 Applications。
-- [Intel Mac](https://github.com/WWangZQ/node-test/releases/download/v1.3.2/NodeTest-1.3.2-macos-x86_64.dmg)：双击 DMG，将节点测评拖入 Applications。
-- [Windows 10 / 11 x64](https://github.com/WWangZQ/node-test/releases/download/v1.3.2/NodeTest-1.3.2-windows-x64-Setup.exe)：双击安装，通过桌面或开始菜单启动。
+- 启动后自动检查新版，点击下载并重启完成升级。
+- Cloudflare 连接失败时依次尝试 OVH、Vultr SG，显示实际测速来源。
+- 分开显示地址用途与 ISP、Fixed ISP、Wireless 等接入信息。
+- 修复 IP 数据查询路径和 Scamalytics 请求地址，记录账户配置错误。
 
-Windows 另附 Portable.zip 便携版，解压后运行 NodeTest.exe。
+## 安装
 
-首次打开遇到系统拦截时：Mac 在系统设置 → 隐私与安全性中选择仍要打开；Windows 在提示窗口中选择更多信息 → 仍要运行。
+- [Apple Silicon Mac](https://github.com/WWangZQ/node-test/releases/download/v1.4.0/NodeTest-1.4.0-macos-arm64.dmg)
+- [Intel Mac](https://github.com/WWangZQ/node-test/releases/download/v1.4.0/NodeTest-1.4.0-macos-x86_64.dmg)
+- [Windows 10 / 11 x64](https://github.com/WWangZQ/node-test/releases/download/v1.4.0/NodeTest-1.4.0-windows-x64-Setup.exe)
 
-## 功能
+Mac 打开 DMG 后将应用拖入 Applications；Windows 双击安装。1.3.x 用户先安装这次更新，之后可在应用内升级。测试记录与设置继续保留。
 
-- 导入整个订阅，批量测速、检测服务可用性与 IP 质量。
-- 默认检测 16 个常用服务，支持按类别选择更多项目。
-- 汇总多个来源的网络类型、代理识别、滥用记录和原始评分。
-- 以彩色表格展示结果，导出 PNG 长图、CSV、JSON 和 HTML。
-
-[使用说明](https://github.com/WWangZQ/node-test#使用) · [检测规则](https://github.com/WWangZQ/node-test/blob/main/docs/DETECTION.md)
-
-source-with-dependencies.tar.gz 包含项目源码和 Go 依赖源码，SHA256SUMS.txt 用于校验下载文件。项目及组件许可证见 [开源说明](https://github.com/WWangZQ/node-test/blob/main/THIRD_PARTY_NOTICES.md)。
+Windows 另附 Portable.zip 便携版。完整源码与依赖见 source-with-dependencies.tar.gz，文件校验见 SHA256SUMS.txt。

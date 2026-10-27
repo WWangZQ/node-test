@@ -22,7 +22,7 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: '24'
-      - run: go test ./cmd/local-worker
+      - run: go test ./cmd/local-worker ./cmd/local-updater
         working-directory: backend
       - run: npm test
       - run: go mod vendor
@@ -57,7 +57,7 @@ jobs:
           cache: npm
       - run: npm ci
       - run: npm test
-      - run: go test ./cmd/local-worker
+      - run: go test ./cmd/local-worker ./cmd/local-updater
         working-directory: backend
       - run: go mod vendor
         working-directory: backend
@@ -68,6 +68,7 @@ jobs:
           New-Item -ItemType Directory -Force bin
           Push-Location backend
           go build -trimpath -ldflags="-s -w" -o ../bin/node-worker.exe ./cmd/local-worker
+          go build -trimpath -ldflags="-s -w" -o ../bin/node-updater.exe ./cmd/local-updater
           Pop-Location
       - run: npm run package:windows
       - name: Packaged desktop smoke test

@@ -63,7 +63,7 @@ class Controller {
       if(this.cancelled)return;
       const clamp=(n,min,max,fallback)=>Math.max(min,Math.min(max,Number.isInteger(n)?n:fallback));
       const settings={mode:['both','speed','unlock'].includes(options.mode)?options.mode:'both',seconds:clamp(options.seconds,2,15,8),megabytes:clamp(options.megabytes,1,256,64),timeout:8,ip_info:true,interface:String(options.interface||''),platforms:[...new Set(Array.isArray(options.platforms)?options.platforms:[])].filter(x=>typeof x==='string'&&x.length<80).slice(0,60),ip_risk:risk};
-      const r=this.report={id:randomUUID(),name:this.name,status:'running',demo:false,created:date(),rows:this.rows(),settings,units:{speed:'MB/s',latency:'ms',bytes:'bytes'},probe_version:'1.3',engine:'mihomo 1.19.10 / Node Test 1.3.2'};
+      const r=this.report={id:randomUUID(),name:this.name,status:'running',demo:false,created:date(),rows:this.rows(),settings,units:{speed:'MB/s',latency:'ms',bytes:'bytes'},probe_version:'1.4.0',engine:'mihomo 1.19.10 / Node Test 1.4.0'};
       const usageFile=path.join(this.support,'quota.json');let usage={day:date().slice(0,10),used:0};
       try{const old=JSON.parse(await fs.readFile(usageFile,'utf8'));if(old.day===usage.day&&Number.isFinite(old.used))usage.used=Math.max(0,old.used);}catch{}
       const budget=keys.ProxyCheck?1000:100;let remaining=Math.max(0,budget-usage.used),cache={},disabled={};

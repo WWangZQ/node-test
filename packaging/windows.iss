@@ -58,3 +58,17 @@ Name: "{autodesktop}\节点测评"; Filename: "{app}\NodeTest.exe"; Tasks: deskt
 
 [Run]
 Filename: "{app}\NodeTest.exe"; Description: "{cm:LaunchApp}"; Flags: nowait postinstall skipifsilent
+
+Filename: "{app}\NodeTest.exe"; Parameters: "{code:UpdateArguments}"; Flags: nowait runhidden; Check: IsUpdate
+
+[Code]
+function IsUpdate: Boolean;
+begin
+  Result := ExpandConstant('{param:UPDATE|0}') = '1';
+end;
+
+function UpdateArguments(Param: String): String;
+begin
+  if ExpandConstant('{param:UPDATETEST|0}') = '1' then Result := '--smoke-test'
+  else Result := '';
+end;
